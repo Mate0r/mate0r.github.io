@@ -6,17 +6,26 @@ h1, h2, h3 {
     padding: 10px;
 }
 
+h1 {
+    font-size: 2rem;
+}
+
+h2 {
+    font-size: 1.5rem;
+}
+
+h3 {
+    font-size: 1rem;
+}
+
 h1::before {
     content: "# ";
-    font-size: 1rem;
 }
 
 h2::before {
     content: "## ";
-    font-size: 0.9rem;
 }
 
 h3::before {
     content: "### ";
-    font-size: 0.8rem;
 }
