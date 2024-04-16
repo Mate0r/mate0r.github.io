@@ -3,6 +3,7 @@ h1, h2, h3 {
     color: red;
     border: 1px solid red;
     padding: 6px;
+    font-weight: normal;
 }
 
 h1 {
