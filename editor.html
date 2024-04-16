@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markdown Viewer</title>
+  <!-- Include CSS for dark theme and code highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/themes/prism-okaidia.min.css">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="post.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #1e1e1e; /* Dark background color */
+      color: #ddd; /* Light text color */
+      padding: 20px;
+      font-family: Arial, sans-serif;
+    }
+    pre {
+      padding: 15px;
+      overflow-x: auto;
+    }
+
+    
+    
+  </style>
+</head>
+<bod class="container">
+    <div class="row">
+
+        <div class="col-lg-6">
+            <textarea id="markdown" style="width: 100%; height:100%"></textarea>
+        </div>
+        <div class="col-lg-6">
+            <button id="copyHtml" class="btn btn-primary">Copy HTML code</button>
+            <div id="markdown-content"></div>
+        </div>
+    </div>
+  
+
+  <!-- Include Showdown.js for parsing Markdown -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"></script>
+  <!-- Include Prism.js for code highlighting -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/prism.min.js"></script>
+  <!-- Include Prism.js language plugin for bash -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/components/prism-zsh.min.js"></script>
+  <!-- Include jQuery -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script>
+    // Function to update Markdown content
+    function updateMarkdown() {
+      // Get the Markdown text from the textarea
+      var markdownText = $('#markdown').val();
+
+      // Convert Markdown to HTML
+      var converter = new showdown.Converter();
+      var html = converter.makeHtml(markdownText);
+
+      // Display HTML content
+      $('#markdown-content').html(html);
+
+      // Highlight code blocks
+      Prism.highlightAll();
+    }
+
+    // Call updateMarkdown function initially
+    updateMarkdown();
+
+    // Listen for changes in the textarea and update Markdown content
+    $('#markdown').on('input', function() {
+      updateMarkdown();
+    });
+
+    $(document).on('click', '#copyHtml', function() {
+      navigator.clipboard.writeText($("#markdown-content").html());
+    });
+
+  </script>
+</body>
+</html>
