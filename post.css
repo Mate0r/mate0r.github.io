@@ -1,5 +1,5 @@
 h1, h2, h3 {
-    background-color: blue;
+    background-color: #333;
     color: red;
     border: 1px solid red;
     border-radius: 0.5rem;
@@ -7,13 +7,16 @@ h1, h2, h3 {
 }
 
 h1::before {
-    content: "#";
+    content: "# ";
+    font-size: 1rem;
 }
 
 h2::before {
-    content: "##";
+    content: "## ";
+    font-size: 0.9rem;
 }
 
 h3::before {
-    content: "###";
+    content: "### ";
+    font-size: 0.8rem;
 }
